@@ -75,6 +75,19 @@ jobs:
         cache-to: type=gha,mode=max
         platforms: linux/amd64,linux/arm64
 
+    # Deploy trigger to Render.com
+    - name: Deploy to Render
+      if: github.event_name != 'pull_request'
+      run: |
+        echo "Triggering deployment to Render"
+        response=$(curl -s -o /dev/null -w "%{http_code}" -X POST ${{ secrets.RENDER_DEPLOY_HOOK }})
+        if [ "$response" -eq 200 ]; then
+          echo "Deployment triggered successfully"
+        else
+          echo "Failed to trigger deployment"
+          exit 1
+        fi
+
     #clean up test image
     - name: Clean up test image
       run: |
