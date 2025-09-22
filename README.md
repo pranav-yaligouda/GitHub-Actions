@@ -61,7 +61,6 @@ GitHub-Actions/
   - Implemented complete GitHub Actions workflow
   - Added Docker build, test, and push automation
   - Set up local testing with Chocolatey and act tool
-  - Configured Render deployment integration
 
 ## 🛠️ Technologies Used
 
