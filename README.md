@@ -1,310 +1,211 @@
-# 🚀 Express.js CI/CD Pipeline with GitHub Actions
+# Express.js CI/CD Pipeline
 
-## 📋 Project Overview
+[![CI/CD Pipeline](https://github.com/pranav-yaligouda/GitHub-Actions/actions/workflows/main.yaml/badge.svg)](https://github.com/pranav-yaligouda/GitHub-Actions/actions)
+[![Docker Hub](https://img.shields.io/docker/pulls/pranavyaligouda/express-app)](https://hub.docker.com/r/pranavyaligouda/express-app)
 
-This project demonstrates a complete **CI/CD pipeline** for a Node.js Express application using **GitHub Actions**, **Docker**, and **Render** deployment. The project showcases modern DevOps practices with automated testing, building, and deployment.
+A production-ready Node.js Express application with automated CI/CD pipeline featuring multi-registry deployment to Docker Hub and AWS ECR.
 
-## 🎯 What This Project Accomplishes
+## Architecture
 
-- ✅ **Express.js API** with proper environment configuration
-- ✅ **Dockerized Application** with security best practices
-- ✅ **GitHub Actions CI/CD** with comprehensive testing
-- ✅ **Automated Docker Hub** image publishing
-- ✅ **Automatic Render Deployment** on successful builds
-- ✅ **Local Testing Setup** with act tool
+```mermaid
+graph LR
+    A[Developer] --> B[GitHub Push]
+    B --> C[GitHub Actions]
+    C --> D[Build & Test]
+    D --> E[Docker Hub]
+    D --> F[AWS ECR]
+    E --> G[Render Deploy]
+    F --> G
+```
 
-## 🏗️ Project Structure
+## Features
+
+- **Multi-Platform Builds**: AMD64 and ARM64 support
+- **Dual Registry**: Docker Hub and AWS ECR deployment
+- **Security Hardened**: Non-root containers, secret masking
+- **Local Testing**: Complete CI/CD simulation with act
+- **Health Monitoring**: Automated container health checks
+
+## Quick Start
+
+```bash
+# Clone and setup
+git clone https://github.com/pranav-yaligouda/GitHub-Actions.git
+cd GitHub-Actions
+npm install
+
+# Local development
+npm run dev
+
+# Docker testing
+docker build -t express-app .
+docker run -p 8080:8080 -e PORT=8080 express-app
+```
+
+## Project Structure
 
 ```
 GitHub-Actions/
-├── .github/
-│   └── workflows/
-│       └── main.yaml              # CI/CD pipeline configuration
-├── config/
-│   └── envconfig.js              # Environment configuration
-├── app.js                        # Main Express application
-├── package.json                  # Node.js dependencies
-├── Dockerfile                    # Docker container definition
-├── .env                         # Environment variables
-├── .secrets                     # Local secrets for testing
-├── .dockerignore               # Docker ignore file
-└── README.md                   # This file
+├── .github/workflows/main.yaml    # CI/CD pipeline configuration
+├── config/envconfig.js           # Environment configuration module
+├── app.js                        # Express application entry point
+├── Dockerfile                    # Container definition
+├── package.json                  # Node.js dependencies and scripts
+├── .env                          # Environment variables (gitignored)
+├── .secrets                      # Local secrets for act testing (gitignored)
+├── .dockerignore                 # Docker build optimization
+└── .gitignore                    # Git ignore patterns
 ```
 
-## 🔄 Development Timeline (Commit History)
+## CI/CD Pipeline
 
-### Phase 1: Project Initialization
-- **Commit 1**: `Initialized node package`
-  - Set up Node.js project structure
-  - Created basic package.json
+### Workflow Triggers
+- **Push to main**: Full deployment pipeline
+- **Pull Request**: Build and test only (no deployment)
 
-### Phase 2: Express Application Setup
-- **Commit 2**: `installed express framework and .gitignore node_modules`
-  - Added Express.js framework
-  - Configured Git ignore patterns
+### Pipeline Stages
 
-### Phase 3: Modern ES Modules & Configuration
-- **Commit 3**: `changed module type to use es module installed express dotenv dependencies`
-  - Migrated to ES6 modules (`"type": "module"`)
-  - Added dotenv for environment management
-  - Created centralized config system
-  - Implemented environment variable best practices
+| Stage | Description | Conditions |
+|-------|-------------|------------|
+| **Build** | Docker image creation | Always |
+| **Test** | Health check validation | Always |
+| **Multi-Platform Build** | AMD64/ARM64 compilation | Push only |
+| **Registry Push** | Docker Hub + AWS ECR | Push only |
+| **Deploy** | Render production deployment | Push only |
 
-### Phase 4: Application & Containerization
-- **Commit 4**: `Created new simple express server with simple message output for home route / and created docker file for the app`
-  - Built Express server with basic route
-  - Created Dockerfile with security best practices
-  - Implemented non-root user containers
+### Multi-Registry Strategy
 
-### Phase 5: CI/CD Pipeline Implementation
-- **Commit 5**: `Created new .yaml for the git actions definition with docker build test and push to dockerhub and the local setup of chock act for local actions testing`
-  - Implemented complete GitHub Actions workflow
-  - Added Docker build, test, and push automation
-  - Set up local testing with Chocolatey and act tool
+```yaml
+# Docker Hub
+pranavyaligouda/express-app:latest
+pranavyaligouda/express-app:${github.sha}
 
-## 🛠️ Technologies Used
+# AWS ECR
+741916656498.dkr.ecr.ap-south-1.amazonaws.com/express-app:latest
+741916656498.dkr.ecr.ap-south-1.amazonaws.com/express-app:${github.sha}
+```
 
-| Technology | Purpose | Implementation |
-|------------|---------|----------------|
-| **Node.js** | Runtime Environment | Express.js application |
-| **Express.js** | Web Framework | Simple REST API |
-| **Docker** | Containerization | Multi-stage builds, security hardening |
-| **GitHub Actions** | CI/CD Pipeline | Automated testing and deployment |
-| **Docker Hub** | Container Registry | Image storage and distribution |
-| **Render** | Cloud Platform | Production deployment |
-| **act** | Local Testing | GitHub Actions local simulation |
+## Security Configuration
 
-## 🔧 Local Development Setup
+### Required Secrets
+
+| Secret | Purpose | Required |
+|--------|---------|----------|
+| `DOCKER_USERNAME` | Docker Hub authentication | ✅ |
+| `DOCKER_PASSWORD` | Docker Hub token | ✅ |
+| `AWS_ACCESS_KEY_ID` | AWS ECR access | ✅ |
+| `AWS_SECRET_ACCESS_KEY` | AWS ECR authentication | ✅ |
+| `AWS_REGION` | AWS ECR region | ✅ |
+| `RENDER_DEPLOY_HOOK` | Deployment webhook | ✅ |
+
+### AWS ECR Setup
+
+```bash
+# Create ECR repository
+aws ecr create-repository --repository-name express-app --region ap-south-1
+
+# Create IAM user with ECR permissions
+aws iam create-user --user-name github-actions-ecr
+aws iam attach-user-policy --user-name github-actions-ecr --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
+aws iam create-access-key --user-name github-actions-ecr
+```
+
+## Local Testing
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+
 - Docker Desktop
-- Git
+- act (GitHub Actions runner)
 
-### Installation Steps
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/pranav-yaligouda/GitHub-Actions.git
-   cd GitHub-Actions
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment**
-   ```bash
-   # Copy .env.example to .env (if exists) or create .env
-   NODE_ENV=development
-   PORT=8080
-   ```
-
-4. **Run locally**
-   ```bash
-   # Development mode
-   npm run dev
-
-   # Production mode
-   npm start
-   ```
-
-5. **Test with Docker**
-   ```bash
-   docker build -t express-app .
-   docker run -p 8080:8080 -e PORT=8080 express-app
-   ```
-
-## 🧪 Local CI/CD Testing Setup
-
-### Install Testing Tools
+### Setup act Tool
 
 ```powershell
-# Install Chocolatey (Windows Package Manager)
-Set-ExecutionPolicy Bypass -Scope Process -Force
-iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-
-# Install act (GitHub Actions local runner)
+# Windows (Chocolatey)
 choco install act-cli
-# OR direct download
-Invoke-WebRequest -Uri "https://github.com/nektos/act/releases/latest/download/act_Windows_x86_64.zip" -OutFile "act.zip"
+
+# macOS (Homebrew)
+brew install act
+
+# Linux
+curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
 ```
 
 ### Configure Local Secrets
 
-```bash
-# Create .secrets file
-DOCKER_USERNAME=your-docker-username
-DOCKER_PASSWORD=your-docker-token
-RENDER_DEPLOY_HOOK=https://api.render.com/deploy/srv-xxx?key=xxx
+Create `.secrets` file:
+```env
+DOCKER_USERNAME=your-username
+DOCKER_PASSWORD=your-token
+AWS_ACCESS_KEY_ID=your-key
+AWS_SECRET_ACCESS_KEY=your-secret
+AWS_REGION=ap-south-1
+RENDER_DEPLOY_HOOK=your-webhook-url
 ```
 
-### Run Local Tests
+### Run Tests
 
 ```bash
-# Test the full workflow
+# Test full pipeline
 act push --secret-file .secrets
 
-# Test pull request workflow (no deployment)
+# Test PR workflow
 act pull_request --secret-file .secrets
 
-# Verbose output for debugging
-act push --secret-file .secrets -v
+# List available workflows
+act -l
 ```
 
-## 🚀 CI/CD Pipeline Details
-
-### Workflow: `.github/workflows/main.yaml`
-
-The pipeline consists of the following stages:
-
-#### 1. **🔍 Code Checkout**
-- Fetches latest code from repository
-- Sets up workspace environment
-
-#### 2. **🔨 Docker Build & Test**
-```yaml
-- name: Build Docker image
-  run: docker build -t pranavyaligouda/express-app:test .
-
-- name: Test Docker container
-  run: |
-    docker run -d -p 8080:8080 -e PORT=8080 --name test-app pranavyaligouda/express-app:test
-    sleep 15
-    curl -f http://localhost:8080 --max-time 10
-```
-
-#### 3. **🏭 Multi-Platform Build & Push**
-```yaml
-- name: Build and Push Docker image
-  uses: docker/build-push-action@v5
-  with:
-    platforms: linux/amd64,linux/arm64
-    push: true
-    tags: |
-      pranavyaligouda/express-app:latest
-      pranavyaligouda/express-app:${{ github.sha }}
-```
-
-#### 4. **🌐 Production Deployment**
-```yaml
-- name: Deploy to Render
-  run: |
-    response=$(curl -s -o /dev/null -w "%{http_code}" -X POST ${{ secrets.RENDER_DEPLOY_HOOK }})
-    if [ "$response" -eq 200 ]; then
-      echo "Deployment triggered successfully"
-    fi
-```
-
-### Trigger Conditions
-
-| Event | Behavior |
-|-------|----------|
-| **Push to main** | Full pipeline: Build → Test → Push → Deploy |
-| **Pull Request** | Test only: Build → Test (no push/deploy) |
-
-## 🐳 Docker Configuration
-
-### Dockerfile Highlights
-
-```dockerfile
-FROM node:22-alpine                 # Lightweight base image
-RUN addgroup app && adduser -S -G app app  # Security: non-root user
-WORKDIR /app
-RUN chown -R app:app .             # Proper ownership
-USER app                           # Switch to non-root
-COPY package*.json ./
-RUN npm ci --omit=dev              # Production dependencies only
-COPY . .
-EXPOSE 8080
-CMD ["npm","start"]
-```
+## Docker Configuration
 
 ### Security Features
-- ✅ Non-root user execution
-- ✅ Minimal attack surface (Alpine Linux)
-- ✅ Production-only dependencies
-- ✅ Proper file ownership
+- Alpine Linux base (minimal attack surface)
+- Non-root user execution
+- Production-only dependencies
+- Conditional deployment (PR safety)
 
-## 📊 Monitoring & Verification
-
-### Health Checks
-The pipeline includes health checks:
-
-```bash
-# Container health verification
-curl -f http://localhost:8080 --max-time 10
-
-# Container logs on failure
-docker logs test-app
+### Multi-Platform Support
+```dockerfile
+FROM node:22-alpine
+RUN addgroup app && adduser -S -G app app
+WORKDIR /app
+RUN chown -R app:app .
+USER app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY . .
+EXPOSE 8080
+CMD ["npm", "start"]
 ```
 
-### Deployment Verification
-- **Docker Hub**: Check image push at [pranavyaligouda/express-app](https://hub.docker.com/r/pranavyaligouda/express-app)
-- **Render**: Monitor deployment status in Render dashboard
-- **Production**: Test live endpoint after deployment
+## Monitoring
 
-## 🔑 Required Secrets
+### Health Checks
+```bash
+# Application health
+curl http://localhost:8080
+# Expected: "Simple Express app for the CI/CD Actions"
 
-Configure these secrets in your GitHub repository:
+# Container status during CI/CD
+docker ps --filter "name=test-app"
+```
 
-| Secret Name | Purpose | Example |
-|-------------|---------|---------|
-| `DOCKER_USERNAME` | Docker Hub login | `pranavyaligouda` |
-| `DOCKER_PASSWORD` | Docker Hub token/password | `dckr_pat_xxxxx` |
-| `RENDER_DEPLOY_HOOK` | Render deployment webhook | `https://api.render.com/deploy/srv-xxx?key=xxx` |
+### Registry Verification
+- **Docker Hub**: [pranavyaligouda/express-app](https://hub.docker.com/r/pranavyaligouda/express-app)
+- **AWS ECR**: `aws ecr list-images --repository-name express-app`
 
-## 🎯 Benefits Achieved
-
-### 🚀 **Automation**
-- Zero-touch deployment from code commit to production
-- Automatic testing prevents broken deployments
-- Multi-platform Docker image support
-
-### 🔒 **Security**
-- Secrets management with GitHub Secrets
-- Non-root Docker containers
-- Production-only dependency installation
-
-### 🧪 **Quality Assurance**
-- Container health checks before deployment
-- Local testing capabilities with act
-- Failed deployments automatically cancelled
-
-### ⚡ **Performance**
-- Docker layer caching for faster builds
-- Multi-platform support (AMD64/ARM64)
-- GitHub Actions caching optimization
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Test locally with `act push --secret-file .secrets`
-4. Commit changes (`git commit -m 'Add amazing feature'`)
-5. Push to branch (`git push origin feature/amazing-feature`)
-6. Open a Pull Request
+2. Create feature branch: `git checkout -b feature-name`
+3. Test locally: `act pull_request --secret-file .secrets`
+4. Commit changes: `git commit -m "Add feature"`
+5. Push branch: `git push origin feature-name`
+6. Create Pull Request
 
-## 📝 License
+## License
 
-This project is licensed under the ISC License.
+ISC License - see [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 Author
+## Author
 
-**Pranav Yaligouda**
-- GitHub: [@pranav-yaligouda](https://github.com/pranav-yaligouda)
-
----
-
-## 🎉 Project Accomplishments Summary
-
-✅ **Complete CI/CD Pipeline** - From code to production automatically  
-✅ **Docker Containerization** - Secure, portable, and scalable  
-✅ **Local Testing Setup** - Test GitHub Actions workflows locally  
-✅ **Multi-Platform Support** - Works on AMD64 and ARM64 architectures  
-✅ **Production Deployment** - Automatic deployment to Render cloud platform  
-✅ **Security Best Practices** - Non-root containers, secrets management  
-✅ **Modern Development** - ES6 modules, environment configuration, proper Git practices
-
-This project serves as a template for modern Node.js application development with complete DevOps automation.
+**Pranav Yaligouda** - [@pranav-yaligouda](https://github.com/pranav-yaligouda)
