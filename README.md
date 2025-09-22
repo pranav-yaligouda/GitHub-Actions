@@ -1,6 +1,6 @@
 # Express.js CI/CD Pipeline
 
-[![CI/CD Pipeline](https://github.com/pranav-yaligouda/GitHub-Actions/actions/workflows/main.yaml/badge.svg)](https://github.com/pranav-yaligouda/GitHub-Actions/actions)
+[![Test Build and Push to DockerHub and AWS ECR](https://github.com/pranav-yaligouda/GitHub-Actions/actions/workflows/main.yaml/badge.svg)](https://github.com/pranav-yaligouda/GitHub-Actions/actions)
 [![Docker Hub](https://img.shields.io/docker/pulls/pranavyaligouda/express-app)](https://hub.docker.com/r/pranavyaligouda/express-app)
 
 A production-ready Node.js Express application with automated CI/CD pipeline featuring multi-registry deployment to Docker Hub and AWS ECR.
@@ -14,6 +14,19 @@ This project teaches:
 - **AWS Integration**: ECR setup, IAM policies, enterprise container management
 - **Local Development**: act tool simulation, environment configuration
 
+## Architecture
+
+```mermaid
+graph LR
+    A[Developer] --> B[GitHub Push]
+    B --> C[GitHub Actions]
+    C --> D[Build & Test]
+    D --> E[Docker Hub]
+    D --> F[AWS ECR]
+    E --> G[Render Deploy]
+    F --> G
+```
+
 ## Technologies Stack
 
 | Technology | Version | Purpose | Learning Focus |
@@ -25,87 +38,6 @@ This project teaches:
 | **AWS ECR** | Latest | Enterprise Registry | IAM, enterprise container management |
 | **Docker Hub** | Latest | Public Registry | Image distribution, versioning |
 | **act** | Latest | Local Testing | GitHub Actions simulation |
-
-## Development Evolution
-
-### 📚 Key Learning Phases
-1. **Project Foundation** → Node.js setup, package management
-2. **Framework Integration** → Express.js, ES6 modules adoption  
-3. **Containerization** → Docker security, Alpine optimization
-4. **CI/CD Implementation** → GitHub Actions, automated testing
-5. **Enterprise Integration** → AWS ECR, multi-registry strategy
-6. **Local Development** → act tool, complete simulation environment
-
-### 🔄 Architecture Evolution
-```
-Basic Express App → Dockerized App → CI/CD Pipeline → Multi-Registry → Enterprise Ready
-```
-
-## Visual Architecture
-
-```mermaid
-graph LR
-    A[Developer] --> B[GitHub Push]
-    B --> C[GitHub Actions]
-    C --> D[Build & Test]
-    D --> E[Docker Hub]
-    D --> F[AWS ECR]
-    E --> G[Render Deploy]
-    F --> G
-```
-
-## Detailed Pipeline Workflow
-
-### 🔍 Stage-by-Stage Breakdown
-
-#### 1. **Code Checkout & Setup**
-```yaml
-- name: Checkout code
-  uses: actions/checkout@v4
-```
-**Learning**: GitHub Actions marketplace, versioning strategies
-
-#### 2. **Docker Build & Testing**
-```yaml
-- name: Build Docker image
-  run: docker build -t ${{ env.IMAGE_NAME }}:test .
-
-- name: Test Docker container  
-  run: |
-    docker run -d -p 8080:8080 -e PORT=8080 --name test-app ${{ env.IMAGE_NAME }}:test
-    sleep 10
-    curl -f http://localhost:8080 --max-time 10
-```
-**Learning**: Environment variables, health checks, container testing
-
-#### 3. **Multi-Platform Building**
-```yaml
-- name: Set up Docker Buildx
-  uses: docker/setup-buildx-action@v3
-
-- name: Build and Push
-  uses: docker/build-push-action@v5
-  with:
-    platforms: linux/amd64,linux/arm64
-```
-**Learning**: Cross-platform compilation, Docker Buildx, caching strategies
-
-#### 4. **Conditional Deployment Logic**
-```yaml
-if: github.event_name != 'pull_request'
-```
-**Learning**: GitHub Actions conditionals, safe PR testing
-
-```mermaid
-graph LR
-    A[Developer] --> B[GitHub Push]
-    B --> C[GitHub Actions]
-    C --> D[Build & Test]
-    D --> E[Docker Hub]
-    D --> F[AWS ECR]
-    E --> G[Render Deploy]
-    F --> G
-```
 
 ## Features
 
@@ -140,6 +72,7 @@ GitHub-Actions/
 ├── app.js                        # Express application entry point
 ├── Dockerfile                    # Container definition
 ├── package.json                  # Node.js dependencies and scripts
+├── package-lock.json             # Dependency lock file
 ├── .env                          # Environment variables (gitignored)
 ├── .secrets                      # Local secrets for act testing (gitignored)
 ├── .dockerignore                 # Docker build optimization
@@ -202,7 +135,7 @@ aws iam create-access-key --user-name github-actions-ecr
 ## Local Testing
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 22+ (matches Docker image)
 - Docker Desktop
 - act (GitHub Actions runner)
 
